@@ -19,5 +19,9 @@ class Order(models.Model):
     weight = models.FloatField()
     region = models.IntegerField()
     delivery_hours = ArrayField(models.CharField(max_length=128))
-    courier_id = models.ForeignKey('Courier', default=-1, on_delete=models.SET_DEFAULT)
+
+
+class CouriersAndOrders(models.Model):
+    courier_id = models.ForeignKey(Courier, on_delete=models.CASCADE)
+    order_id = models.OneToOneField(Order, on_delete=models.CASCADE)
     completed = models.BooleanField(default=False)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Courier, Order
+from .models import Courier, Order, CouriersAndOrders
 from rest_framework.validators import UniqueValidator
 
 class CourierSerializer(serializers.ModelSerializer):
@@ -34,7 +34,7 @@ class AssignSerializer(serializers.Serializer):
             return value
 
     def create(self, validated_data):
-        return Courier.objects.create(**validated_data)
+        return CouriersAndOrders.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         instance.courier_id = validated_data.get('courier_id', instance.courier_id)
