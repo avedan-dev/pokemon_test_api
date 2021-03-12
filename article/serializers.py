@@ -28,6 +28,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class AssignSerializer(serializers.Serializer):
     courier_id = serializers.IntegerField()
+    order_id = serializers.IntegerField(required=False)
 
     def validate_courier_id(self, value):
         if Courier.objects.all().get(pk=value).courier_id:

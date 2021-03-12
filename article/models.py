@@ -14,6 +14,7 @@ class Courier(models.Model):
     working_hours = ArrayField(models.CharField(max_length=128))
 
 
+
 class Order(models.Model):
     order_id = models.IntegerField(unique=True, primary_key=True)
     weight = models.FloatField()
@@ -23,5 +24,5 @@ class Order(models.Model):
 
 class CouriersAndOrders(models.Model):
     courier_id = models.ForeignKey(Courier, on_delete=models.CASCADE)
-    order_id = models.OneToOneField(Order, on_delete=models.CASCADE)
+    order_id = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
     completed = models.BooleanField(default=False)
