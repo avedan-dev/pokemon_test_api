@@ -6,6 +6,7 @@ from .models import Courier, Order, CouriersAndOrders
 from .serializers import CourierSerializer, OrderSerializer, AssignSerializer
 from django.db.models import Min, Max
 import datetime as dt
+
 courier_lifting = {
     'foot': 10,
     'bike': 15,
@@ -24,7 +25,7 @@ class CourierView(APIView):
         saved_courier = get_object_or_404(Courier.objects.all(), pk=pk)
         data = request.data
         serializer = CourierSerializer(instance=saved_courier, data=data, partial=True)
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid(raise_exception=False):
             courier_saved = serializer.save()
             return Response(Courier.objects.filter(courier_id=pk).values()[0], status=status.HTTP_200_OK)
         else:
@@ -40,9 +41,10 @@ class CourierView(APIView):
         else:
             for i in range(len(serializer.errors)):
                 if serializer.errors[i] != {}:
-                    ans.append(serializer.data[i]['courier_id'])
+                    ans.append(courier[i]['courier_id'])
             print(serializer.errors)
-            return Response({"validation_error": {"couriers": [{"id": ans[j]} for j in range(len(ans))]}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"validation_error": {"couriers": [{"id": ans[j]} for j in range(len(ans))]}},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class OrderView(APIView):
@@ -57,7 +59,8 @@ class OrderView(APIView):
             for i in range(len(serializer.errors)):
                 if serializer.errors[i] != {}:
                     ans.append(serializer.data[i]['order_id'])
-            return Response({"validation_error": {"orders": [{"id": ans[j]} for j in range(len(ans))]}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"validation_error": {"orders": [{"id": ans[j]} for j in range(len(ans))]}},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class AssignView(APIView):
@@ -74,17 +77,23 @@ class AssignView(APIView):
                 for work_time in s:
                     for i in range(len(order.delivery_hours)):
                         order_time = str_to_time(order.delivery_hours[i])
-                        if ((work_time[0]<=order_time[0] and work_time[1]>=order_time[0]) or (work_time[1]>=order_time[1] and work_time[0]<=order_time[0])):
+                        if (work_time[0] <= order_time[0] and work_time[1] >= order_time[0]) or (
+                                work_time[1] >= order_time[1] and work_time[0] <= order_time[0]):
                             ans.append(order)
                             new = CouriersAndOrders(courier_id=courier, order_id=order)
-                            new.save(force_update=True)
+                            try:
+                                new.save(force_update=False)
+                            except Exception as e:
+                                print(e)
+                                pass
                             x = 1
                             break
                     if x == 1:
                         break
             return Response({"orders": [{"id": ans[j].order_id} for j in range(len(ans))]}, status=status.HTTP_200_OK)
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CompleteView(APIView):
     def post(self, request):
@@ -92,11 +101,13 @@ class CompleteView(APIView):
         serializer = AssignSerializer(data=data, many=False)
         if serializer.is_valid(raise_exception=False):
             try:
-                new = CouriersAndOrders.objects.get(courier_id=serializer.validated_data["courier_id"], order_id=serializer.validated_data["order_id"])
+                new = CouriersAndOrders.objects.get(courier_id=serializer.validated_data["courier_id"],
+                                                    order_id=serializer.validated_data["order_id"])
                 new.completed = True
                 new.save(force_update=True)
                 return Response({"order_id": serializer.validated_data["order_id"]}, status=status.HTTP_200_OK)
-            except:
+            except Exception as e:
+                print(e)
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)

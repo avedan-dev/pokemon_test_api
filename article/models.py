@@ -26,3 +26,6 @@ class CouriersAndOrders(models.Model):
     courier_id = models.ForeignKey(Courier, on_delete=models.CASCADE)
     order_id = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
     completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.order_id.order_id)

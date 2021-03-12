@@ -3,9 +3,10 @@ from .models import Courier, Order, CouriersAndOrders
 from rest_framework.validators import UniqueValidator
 
 class CourierSerializer(serializers.ModelSerializer):
+    #courier_type = serializers.CharField(max_length=128, error_messages="Regions should be list of ints")
     class Meta:
         model = Courier
-        fields = ['courier_id', 'courier_type', 'regions', 'working_hours']
+        fields = '__all__'
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -31,8 +32,11 @@ class AssignSerializer(serializers.Serializer):
     order_id = serializers.IntegerField(required=False)
 
     def validate_courier_id(self, value):
-        if Courier.objects.all().get(pk=value).courier_id:
-            return value
+        try:
+            if Courier.objects.all().filter(pk=value).courier_id:
+                return value
+        except AttributeError:
+            raise serializers.ValidationError("This courier id does not exist")
 
     def create(self, validated_data):
         return CouriersAndOrders.objects.create(**validated_data)
