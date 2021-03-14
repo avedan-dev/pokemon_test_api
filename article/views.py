@@ -13,10 +13,16 @@ courier_lifting = {
     'car': 50,
 }
 
+courier_salary = {
+    'foot': 2,
+    'bike': 5,
+    'car': 9,
+}
+
 
 def str_to_time(working_hours):
-    start_time = dt.datetime.strptime(working_hours.split('-')[0], '%H:%M')
-    end_time = dt.datetime.strptime(working_hours.split('-')[1], '%H:%M')
+    start_time = dt.datetime.strptime(str(dt.date.today())+working_hours.split('-')[0], '%Y-%m-%d%H:%M')
+    end_time = dt.datetime.strptime(str(dt.date.today())+working_hours.split('-')[1], '%Y-%m-%d%H:%M')
     return [start_time, end_time]
 
 
@@ -52,6 +58,11 @@ class CourierView(APIView):
             return Response(Courier.objects.filter(courier_id=pk).values()[0], status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, pk):
+        saved_courier = get_object_or_404(Courier.objects.all(), pk=pk)
+        data = request.data
+        serializer = CourierSerializer(instance=saved_courier, data=data, partial=True)
 
     def post(self, request):
         ans = []
@@ -111,7 +122,7 @@ class AssignView(APIView):
                                 break
                     if x == 1:
                         break
-            return Response({"orders": [{"id": ans[j].order_id} for j in range(len(ans))]}, status=status.HTTP_200_OK)
+            return Response({"orders": [{"id": ans[j].order_id} for j in range(len(ans))], "assign_time": str(dt.datetime.today().isoformat())+'Z'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -125,9 +136,14 @@ class CompleteView(APIView):
                 new = CouriersAndOrders.objects.get(courier_id=serializer.validated_data["courier_id"],
                                                     order_id=serializer.validated_data["order_id"])
                 new.completed = True
-                new.save(force_update=True)
+                new.delete()
+                courier = Courier.objects.get(courier_id=serializer.validated_data["courier_id"])
+                c = courier_salary[courier.courier_type]
+                courier.earning += 500*c
+                courier.save()
                 return Response({"order_id": serializer.validated_data["order_id"]}, status=status.HTTP_200_OK)
             except Exception as e:
+                print(e) #Дописать чего именно не нашлось
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
