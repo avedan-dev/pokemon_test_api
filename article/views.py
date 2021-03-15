@@ -4,8 +4,9 @@ from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from .models import Courier, Order, CouriersAndOrders
 from .serializers import CourierSerializer, OrderSerializer, AssignSerializer
-from django.db.models import Min, Max
+from django.db.models import Min, Max, Avg
 import datetime as dt
+from django.utils import timezone
 
 courier_lifting = {
     'foot': 10,
@@ -37,8 +38,8 @@ def courier_check(courier):
             for work_time in s:
                 for i in range(len(order.delivery_hours)):
                     order_time = str_to_time(order.delivery_hours[i])
-                    if (work_time[0] <= order_time[0] and work_time[1] >= order_time[0]) or (
-                            work_time[1] >= order_time[1] and work_time[0] <= order_time[0]):
+                    if (work_time[0] < order_time[0] < work_time[1]) or (
+                            work_time[1] > order_time[1] and work_time[0] < order_time[0]):
                         x = 1
                         break
                     else:
@@ -109,14 +110,14 @@ class AssignView(APIView):
                 for work_time in s:
                     for i in range(len(order.delivery_hours)):
                         order_time = str_to_time(order.delivery_hours[i])
-                        if (work_time[0] <= order_time[0] and work_time[1] >= order_time[0]) or (
-                                work_time[1] >= order_time[1] and work_time[0] <= order_time[0]):
+                        if (work_time[0] < order_time[0] < work_time[1]) or (
+                                work_time[1] > order_time[1] and work_time[0] < order_time[0]):
                             if not CouriersAndOrders.objects.filter(order_id=order):
                                 ans.append(order)
                                 new = CouriersAndOrders(courier_id=courier, order_id=order)
                                 try:
                                     new.save()
-                                except Exception as e:
+                                except:
                                     pass
                                 x = 1
                                 break
@@ -136,14 +137,22 @@ class CompleteView(APIView):
                 new = CouriersAndOrders.objects.get(courier_id=serializer.validated_data["courier_id"],
                                                     order_id=serializer.validated_data["order_id"])
                 new.completed = True
-                new.delete()
+                comlete_time = dt.datetime.strptime(data['complete_time'], '%Y-%m-%dT%H:%M:%S.%f%z')
                 courier = Courier.objects.get(courier_id=serializer.validated_data["courier_id"])
+
+                order = Order.objects.get(order_id=serializer.validated_data["order_id"])
+                order.finish_time = (comlete_time - new.assign_time).total_seconds()
+                order.save()
                 c = courier_salary[courier.courier_type]
                 courier.earning += 500*c
+                # Рейтинг пока считается только по первому заказу, а не по разнице времени с предыдущим.
+                t = Order.objects.values('region').filter(finish_time__gt=0).annotate(Avg('finish_time')).order_by(
+                    "finish_time__avg")[0]['finish_time__avg']
+                courier.rating = round((60*60 - min(t, 60*60))/(60*60)*5,2)
                 courier.save()
                 return Response({"order_id": serializer.validated_data["order_id"]}, status=status.HTTP_200_OK)
             except Exception as e:
-                print(e) #Дописать чего именно не нашлось
+                print(e) # Дописать чего именно не нашлось
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

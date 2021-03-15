@@ -14,12 +14,6 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
-    '''  order_id = serializers.IntegerField(validators=[UniqueValidator(Order.objects.all())])
-    weight = serializers.FloatField()
-    region = serializers.IntegerField()
-    delivery_hours = serializers.ListField(child=serializers.CharField(max_length=128))
-    courier_id = serializers.IntegerField(default=None)
-    completed = serializers.BooleanField(default=False)'''
 
     def validate_weight(self, value):
         if (value > 50 or value < 0.01):
@@ -31,6 +25,8 @@ class OrderSerializer(serializers.ModelSerializer):
 class AssignSerializer(serializers.Serializer):
     courier_id = serializers.IntegerField()
     order_id = serializers.IntegerField(required=False)
+    assign_time = serializers.DateTimeField(required=False)
+
 
     def validate_courier_id(self, value):
         try:
