@@ -27,7 +27,6 @@ class AssignSerializer(serializers.Serializer):
     order_id = serializers.IntegerField(required=False)
     assign_time = serializers.DateTimeField(required=False)
 
-
     def validate_courier_id(self, value):
         try:
             if Courier.objects.all().get(pk=value).courier_id:
@@ -43,3 +42,32 @@ class AssignSerializer(serializers.Serializer):
         instance.courier_id = validated_data.get('courier_id', instance.courier_id)
         instance.save()
         return instance
+
+class CompleteSerializer(serializers.Serializer):
+    def validate(self, data):
+        new = CouriersAndOrders.objects.get(courier_id=data["courier_id"],
+                                            order_id=data["order_id"])
+        if (data['complete_time'] - new.assign_time).total_seconds()>=0:
+            return data
+        else:
+            raise serializers.ValidationError("Complete time less than assign time")
+
+
+    courier_id = serializers.IntegerField()
+    order_id = serializers.IntegerField()
+    complete_time = serializers.DateTimeField()
+
+
+    def validate_courier_id(self, value):
+        try:
+            if Courier.objects.all().get(pk=value).courier_id:
+                return value
+        except (AttributeError, ObjectDoesNotExist):
+            raise serializers.ValidationError("This courier id does not exist")
+
+    def validate_order_id(self, value):
+        try:
+            if Order.objects.all().get(pk=value).order_id:
+                return value
+        except (AttributeError, ObjectDoesNotExist):
+            raise serializers.ValidationError("This order id does not exist")

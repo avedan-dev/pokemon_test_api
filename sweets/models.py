@@ -15,6 +15,7 @@ class Courier(models.Model):
     working_hours = ArrayField(models.CharField(max_length=128))
     rating = models.FloatField(default=0, )
     earning = models.IntegerField(default=0)
+    last_order = models.DateTimeField(default=None, null=True)
 
 
 class Order(models.Model):
