@@ -1,10 +1,10 @@
 import factory
-from sweets.models import Courier
+from sweets.models import Courier, Order
 
 
-class CourierFactory(factory.django.DjangoModelFactory):
+class OrderFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Courier
+        model = Order
 
-print(CourierFactory())
-(CourierFactory.create_batch(3))
+    order_id = factory.Sequence(lambda n: 2*n)
+
