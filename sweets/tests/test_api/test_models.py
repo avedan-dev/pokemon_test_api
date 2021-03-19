@@ -1,12 +1,16 @@
 import pytest
-from sweets.models import Order
-from sweets.tests.test_api.factories import OrderFactory
+from sweets.tests.test_api.factories import OrderFactory, CourierFactory
 
 
 @pytest.mark.django_db
 class TestOrder:
-    def test_shipped(self):
-        """After shipping an order, the status is shipped."""
+    def test_order_create(self):
         order = OrderFactory.build_batch(3)
-        print(order)
         assert order
+
+
+@pytest.mark.django_db
+class TestCourier:
+    def test_courier_create(self):
+        courier = CourierFactory.build_batch(3)
+        assert courier

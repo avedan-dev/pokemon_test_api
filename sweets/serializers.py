@@ -9,6 +9,11 @@ class CourierSerializer(serializers.ModelSerializer):
         model = Courier
         fields = '__all__'
 
+    def validate_regions(self, regions):
+        if len(regions) != len(set(regions)):
+            raise serializers.ValidationError("The regions shouldn`t be repeated")
+        else:
+            return regions
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:

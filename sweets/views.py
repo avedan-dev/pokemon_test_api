@@ -95,6 +95,7 @@ class CourierView(APIView):
             for i in range(len(serializer.errors)):
                 if serializer.errors[i] != {}:
                     ans.append(courier[i]['courier_id'])
+            print(serializer.errors)
             return Response({"validation_error": {"couriers": [{"id": ans[j]} for j in range(len(ans))]}},
                             status=status.HTTP_400_BAD_REQUEST)
 
