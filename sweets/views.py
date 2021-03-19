@@ -112,6 +112,7 @@ class OrderView(APIView):
             for i in range(len(serializer.errors)):
                 if serializer.errors[i] != {}:
                     ans.append(serializer.data[i]['order_id'])
+            print(serializer.errors)
             return Response({"validation_error": {"orders": [{"id": ans[j]} for j in range(len(ans))]}},
                             status=status.HTTP_400_BAD_REQUEST)
 
