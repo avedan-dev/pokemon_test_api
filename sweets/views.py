@@ -131,8 +131,8 @@ class AssignView(APIView):
                 for work_time in s:
                     for i in range(len(order.delivery_hours)):
                         order_time = str_to_time(order.delivery_hours[i])
-                        if (work_time[0] < order_time[0] < work_time[1]) or (
-                                work_time[1] > order_time[1] and work_time[0] < order_time[0]):
+                        if work_time[0] < order_time[0] < work_time[1] or (
+                                order_time[0] < work_time[0] < order_time[1]):
                             if not CouriersAndOrders.objects.filter(order_id=order):
                                 ans.append(order)
                                 new = CouriersAndOrders(courier_id=courier, order_id=order)
@@ -144,8 +144,11 @@ class AssignView(APIView):
                                 break
                     if x == 1:
                         break
-            return Response({"orders": [{"id": ans[j].order_id} for j in range(len(ans))],
-                             "assign_time": str(dt.datetime.today().isoformat()) + 'Z'}, status=status.HTTP_200_OK)
+            if ans:
+                return Response({"orders": [{"id": ans[j].order_id} for j in range(len(ans))],
+                                 "assign_time": str(dt.datetime.today().isoformat()) + 'Z'}, status=status.HTTP_200_OK)
+            else:
+                return Response({"orders": []}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

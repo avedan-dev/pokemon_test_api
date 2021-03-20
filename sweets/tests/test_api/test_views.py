@@ -1,13 +1,11 @@
-import factory
+import datetime as dt
 import json
 import pytest
 from sweets.models import Courier, Order
-from sweets.tests.test_api.factories import CourierFactory, gen_courier_json, gen_order_json
+from sweets.tests.test_api.factories import CourierFactory, gen_courier_json, gen_order_json, OrderFactory
 
 
-pytestmark = pytest.mark.django_db
-
-
+@pytest.mark.django_db
 class TestCouriersEndpoints:
     def test_post_couriers(self, api_client):
         endpoint = '/couriers'
@@ -46,11 +44,11 @@ class TestCouriersEndpoints:
 
         def test_get_courier(self, api_client):
             endpoint = '/couriers/'
-
             courier = CourierFactory.create()
-
             endpoint += str(courier.courier_id)
 
+
+@pytest.mark.django_db
 class TestOrdersEndpoints:
     def test_post_orders(self, api_client):
         endpoint = '/orders'
@@ -62,7 +60,21 @@ class TestOrdersEndpoints:
         assert expected_response == response.data
 
 
+@pytest.mark.django_db
 class TestAssignOrdersEndpoints:
     def test_something(self, api_client):
-        courier = CourierFactory.create(courier_id=3, courier_type='foot')
-        print(courier.courier_type)
+        endpoint = '/orders/assign'
+        courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
+                                        working_hours=['12:00-14:00'])
+        OrderFactory.create(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:01'])
+        OrderFactory.create(order_id=2, weight=5.0, region=2, delivery_hours=['9:00-12:00'])
+        OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:59-16:00'])
+        OrderFactory.create(order_id=4, weight=7.0, region=2, delivery_hours=['14:00-16:00'])
+        OrderFactory.create(order_id=5, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
+        response = api_client().post(endpoint, {'courier_id': 3})
+        expected = [{'id': 1}, {'id': 3}, {'id': 5}]
+        assert response.data['orders'] == expected
+        courier = CourierFactory.create(courier_id=4, courier_type='foot', regions=[1, 2, 3],
+                                        working_hours=['12:00-14:00'])
+        response = api_client().post(endpoint, {'courier_id': 4})
+        assert response.data == {"orders": []}
