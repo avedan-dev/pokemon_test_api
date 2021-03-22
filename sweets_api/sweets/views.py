@@ -4,9 +4,8 @@ from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from .models import Courier, Order, CouriersAndOrders
 from .serializers import CourierSerializer, OrderSerializer, AssignSerializer, CompleteSerializer
-from django.db.models import Min, Max, Avg
+from django.db.models import Avg
 import datetime as dt
-from django.utils import timezone
 
 courier_lifting = {
     'foot': 10,

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Courier, Order, CouriersAndOrders
-from rest_framework.validators import UniqueValidator
 from django.core.exceptions import ObjectDoesNotExist
 
 class CourierSerializer(serializers.ModelSerializer):

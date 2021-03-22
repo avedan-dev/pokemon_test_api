@@ -1,5 +1,5 @@
 import pytest
-from sweets.tests.test_api.factories import OrderFactory, CourierFactory
+from tests.test_api.factories import OrderFactory, CourierFactory
 
 
 @pytest.mark.django_db

@@ -1,9 +1,7 @@
 import factory
 from factory.fuzzy import FuzzyFloat
-from sweets.models import Courier, Order
-from typing import Optional
+from sweets_api.sweets.models import Courier, Order
 import random
-
 
 class OrderFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -48,10 +46,3 @@ def gen_order_json(n=1):
     }]}
     return json
 
-'''
-def gen_courier(
-        courier_id: Optional[int] = None,
-        courier_type,
-        regions,
-        working_hours):
-'''

@@ -1,8 +1,5 @@
-import datetime as dt
-import json
 import pytest
-from sweets.models import Courier, Order
-from sweets.tests.test_api.factories import CourierFactory, gen_courier_json, gen_order_json, OrderFactory
+from tests.test_api.factories import CourierFactory, gen_courier_json, gen_order_json, OrderFactory
 
 
 @pytest.mark.django_db
@@ -14,7 +11,6 @@ class TestCouriersEndpoints:
         expected_response = {"couriers": [{"id": courier_json['data'][i]['courier_id']} for i in range(3)]}
 
         response = api_client().post(endpoint, courier_json, format='json')
-        print(json.loads(response.content))
         assert response.status_code == 201
         assert expected_response == response.data
 
@@ -64,8 +60,8 @@ class TestOrdersEndpoints:
 class TestAssignOrdersEndpoints:
     def test_something(self, api_client):
         endpoint = '/orders/assign'
-        courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
-                                        working_hours=['12:00-14:00'])
+        CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
+                              working_hours=['12:00-14:00'])
         OrderFactory.create(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:01'])
         OrderFactory.create(order_id=2, weight=5.0, region=2, delivery_hours=['9:00-12:00'])
         OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:59-16:00'])
@@ -74,7 +70,7 @@ class TestAssignOrdersEndpoints:
         response = api_client().post(endpoint, {'courier_id': 3})
         expected = [{'id': 1}, {'id': 3}, {'id': 5}]
         assert response.data['orders'] == expected
-        courier = CourierFactory.create(courier_id=4, courier_type='foot', regions=[1, 2, 3],
-                                        working_hours=['12:00-14:00'])
+        CourierFactory.create(courier_id=4, courier_type='foot', regions=[1, 2, 3],
+                              working_hours=['12:00-14:00'])
         response = api_client().post(endpoint, {'courier_id': 4})
         assert response.data == {"orders": []}
