@@ -25,6 +25,7 @@ class Order(models.Model):
     delivery_hours = ArrayField(models.CharField(max_length=128))
     finish_time = models.IntegerField(default=None, null=True)
 
+
 class CouriersAndOrders(models.Model):
     courier_id = models.ForeignKey(Courier, on_delete=models.CASCADE)
     order_id = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)

@@ -137,7 +137,7 @@ class AssignView(APIView):
                                 new = CouriersAndOrders(courier_id=courier, order_id=order)
                                 try:
                                     new.save()
-                                except:
+                                except ValueError:
                                     pass
                                 x = 1
                                 break
