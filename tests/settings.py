@@ -2,18 +2,18 @@ from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = 'foo'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 1
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -66,14 +66,11 @@ WSGI_APPLICATION = 'sweets_api.django_core.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("SQL_ENGINE", 'django.db.backends.postgresql_psycopg2'),
-        "NAME": os.environ.get("SQL_DATABASE", os.path.join(BASE_DIR, 'postgres')),
-        "USER": os.environ.get("SQL_USER", "postgres"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "postgres"),
+        "NAME": os.environ.get("SQL_DATABASE", os.path.join(BASE_DIR, 'django_db')),
+        "USER": os.environ.get("SQL_USER", "user_name"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
         "HOST": os.environ.get("SQL_HOST", '127.0.0.1'),
         "PORT": os.environ.get("SQL_PORT", "5432"),
-        'TEST': {
-            'NAME': 'testdatabase'
-        }
     }
 }
 
