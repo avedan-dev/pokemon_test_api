@@ -60,7 +60,23 @@ def courier_data(courier):
     return courier
 
 
-class CourierView(APIView):
+class CouriersPostView(APIView):
+    def post(self, request):
+        ans = []
+        courier = request.data.get("data")
+        serializer = CourierSerializer(data=courier, many=True)
+        if serializer.is_valid(raise_exception=False):
+            courier_saved = serializer.save()
+            return Response({"couriers": [{"id": x.courier_id} for x in courier_saved]}, status=status.HTTP_201_CREATED)
+        else:
+            for i in range(len(serializer.errors)):
+                if serializer.errors[i] != {}:
+                    ans.append(courier[i]['courier_id'])
+            print(serializer.errors)
+            return Response({"validation_error": {"couriers": [{"id": ans[j]} for j in range(len(ans))]}},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+class CouriersGetView(APIView):
     def patch(self, request, pk):
         saved_courier = get_object_or_404(Courier.objects.all(), pk=pk)
         data = request.data
@@ -82,21 +98,6 @@ class CourierView(APIView):
             return Response(courier_data(courier), status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def post(self, request):
-        ans = []
-        courier = request.data.get("data")
-        serializer = CourierSerializer(data=courier, many=True)
-        if serializer.is_valid(raise_exception=False):
-            courier_saved = serializer.save()
-            return Response({"couriers": [{"id": x.courier_id} for x in courier_saved]}, status=status.HTTP_201_CREATED)
-        else:
-            for i in range(len(serializer.errors)):
-                if serializer.errors[i] != {}:
-                    ans.append(courier[i]['courier_id'])
-            print(serializer.errors)
-            return Response({"validation_error": {"couriers": [{"id": ans[j]} for j in range(len(ans))]}},
-                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class OrderView(APIView):
