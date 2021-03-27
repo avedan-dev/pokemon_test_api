@@ -1,8 +1,15 @@
 import pytest
 from tests.test_api.factories import CourierFactory, gen_courier_json, gen_order_json, OrderFactory
 
+order_valid_list = [OrderFactory.build(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:01']),
+                    OrderFactory.build(order_id=2, weight=7.0, region=2, delivery_hours=['13:59-16:00']),
+                    OrderFactory.build(order_id=3, weight=7.0, region=2, delivery_hours=['13:00-13:30'])]
 
-@pytest.mark.django_db
+order_invalid_list = [OrderFactory.build(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:00']),
+                      OrderFactory.build(order_id=1, weight=7.0, region=2, delivery_hours=['14:00-16:00'])]
+
+pytestmark = pytest.mark.django_db
+
 class TestCouriersEndpoints:
     def test_post_couriers(self, api_client):
         endpoint = '/couriers'
@@ -44,7 +51,7 @@ class TestCouriersEndpoints:
             endpoint += str(courier.courier_id)
 
 
-@pytest.mark.django_db
+
 class TestOrdersEndpoints:
     def test_post_orders(self, api_client):
         endpoint = '/orders'
@@ -56,21 +63,29 @@ class TestOrdersEndpoints:
         assert expected_response == response.data
 
 
-@pytest.mark.django_db
+
+
 class TestAssignOrdersEndpoints:
-    def test_something(self, api_client):
+    @pytest.mark.parametrize('order', order_valid_list)
+    def test_valid_assign(self, api_client, order):
         endpoint = '/orders/assign'
         CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
                               working_hours=['12:00-14:00'])
-        OrderFactory.create(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:01'])
-        OrderFactory.create(order_id=2, weight=5.0, region=2, delivery_hours=['9:00-12:00'])
-        OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:59-16:00'])
-        OrderFactory.create(order_id=4, weight=7.0, region=2, delivery_hours=['14:00-16:00'])
-        OrderFactory.create(order_id=5, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
+        order.save()
         response = api_client().post(endpoint, {'courier_id': 3})
-        expected = [{'id': 1}, {'id': 3}, {'id': 5}]
+        expected = [{'id': order.order_id}]
         assert response.data['orders'] == expected
         CourierFactory.create(courier_id=4, courier_type='foot', regions=[1, 2, 3],
                               working_hours=['12:00-14:00'])
         response = api_client().post(endpoint, {'courier_id': 4})
         assert response.data == {"orders": []}
+
+    @pytest.mark.parametrize('order', order_invalid_list)
+    def test_invalid_assign(self, api_client, order):
+        endpoint = '/orders/assign'
+        CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
+                              working_hours=['12:00-14:00'])
+        order.save()
+        response = api_client().post(endpoint, {'courier_id': 3})
+        expected = []
+        assert response.data['orders'] == expected
