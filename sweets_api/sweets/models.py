@@ -33,4 +33,4 @@ class CouriersAndOrders(models.Model):
     assign_time = models.DateTimeField(default=now)
 
     def __str__(self):
-        return str(self.order_id.order_id)
+        return 'Order '+str(self.order_id.order_id)+' Courier '+str(self.courier_id.courier_id)
