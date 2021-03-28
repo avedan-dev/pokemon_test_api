@@ -1,8 +1,9 @@
 import pytest
 import factory
-from sweets_api.sweets.serializers import CourierSerializer, OrderSerializer, AssignSerializer, CompleteSerializer
-from tests.test_api.factories import CourierFactory, OrderFactory, CouriersAndOrdersFactory
-
+from sweets_api.sweets.serializers import CourierSerializer, OrderSerializer, \
+    AssignSerializer, CompleteSerializer
+from tests.test_api.factories import CourierFactory, OrderFactory, \
+    CouriersAndOrdersFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -23,6 +24,7 @@ class TestCourierSerializer:
         serializer.is_valid()
         assert serializer.is_valid()
         assert serializer.errors == {}
+
 
 class TestOrderSerializer:
     def test_serialize_model(self):
@@ -72,5 +74,3 @@ class TestCompleteSerializer:
         serializer.is_valid()
         assert serializer.is_valid()
         assert serializer.errors == {}
-
-

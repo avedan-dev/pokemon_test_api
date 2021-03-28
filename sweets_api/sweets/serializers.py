@@ -4,15 +4,19 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 class CourierSerializer(serializers.ModelSerializer):
-    working_hours = serializers.ListField(child=serializers.CharField(max_length=128), allow_empty=True)
-    regions = serializers.ListField(child=serializers.IntegerField(allow_null=False), allow_empty=False)
+    working_hours = serializers.ListField(
+        child=serializers.CharField(max_length=128), allow_empty=True)
+    regions = serializers.ListField(
+        child=serializers.IntegerField(allow_null=False), allow_empty=False)
+
     class Meta:
         model = Courier
         fields = '__all__'
 
     def validate_regions(self, regions):
         if len(regions) != len(set(regions)):
-            raise serializers.ValidationError("The regions shouldn`t be repeated")
+            raise serializers.ValidationError(
+                "The regions shouldn`t be repeated")
         else:
             return regions
 
@@ -44,7 +48,8 @@ class AssignSerializer(serializers.Serializer):
         return CouriersAndOrders.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.courier_id = validated_data.get('courier_id', instance.courier_id)
+        instance.courier_id = validated_data.get('courier_id',
+                                                 instance.courier_id)
         instance.save()
         return instance
 
@@ -53,10 +58,11 @@ class CompleteSerializer(serializers.Serializer):
     def validate(self, data):
         new = CouriersAndOrders.objects.get(courier_id=data["courier_id"],
                                             order_id=data["order_id"])
-        if (data['complete_time'] - new.assign_time).total_seconds() >= 0:
+        if int((data['complete_time'] - new.assign_time).total_seconds()) >= 0:
             return data
         else:
-            raise serializers.ValidationError("Complete time less than assign time")
+            raise serializers.ValidationError(
+                "Complete time less than assign time")
 
     courier_id = serializers.IntegerField()
     order_id = serializers.IntegerField()

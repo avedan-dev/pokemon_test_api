@@ -8,7 +8,6 @@ def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sweets_api.django_core.settings')
     try:
-        print(os.environ['DJANGO_SETTINGS_MODULE'])
         from django.core.management import execute_from_command_line
     except ImportError as exc:
         raise ImportError(
