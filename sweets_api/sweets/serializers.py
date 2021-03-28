@@ -4,7 +4,8 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 class CourierSerializer(serializers.ModelSerializer):
-    # courier_type = serializers.CharField(max_length=128, error_messages="Regions should be list of ints")
+    working_hours = serializers.ListField(child=serializers.CharField(max_length=128), allow_empty=True)
+    regions = serializers.ListField(child=serializers.IntegerField(allow_null=False), allow_empty=False)
     class Meta:
         model = Courier
         fields = '__all__'
@@ -22,7 +23,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_weight(self, value):
-        if (value > 50 or value < 0.01):
+        if value > 50 or value < 0.01:
             raise serializers.ValidationError("Invalid weight")
         return value
 

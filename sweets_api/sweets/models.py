@@ -12,9 +12,9 @@ class Courier(models.Model):
     )
     courier_type = models.CharField(max_length=128, choices=COURIER_TYPES)
     regions = ArrayField(models.IntegerField())
-    working_hours = ArrayField(models.CharField(max_length=128))
-    rating = models.FloatField(default=0, )
-    earning = models.IntegerField(default=0)
+    working_hours = ArrayField(models.CharField(max_length=128), null=True)
+    rating = models.FloatField(default=0)
+    earnings = models.IntegerField(default=0)
     last_order = models.DateTimeField(default=None, null=True)
 
 
@@ -26,6 +26,7 @@ class Order(models.Model):
     finish_time = models.IntegerField(default=None, null=True)
 
 
+# Модель которая связывает курьера и заказ
 class CouriersAndOrders(models.Model):
     courier_id = models.ForeignKey(Courier, on_delete=models.CASCADE)
     order_id = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)

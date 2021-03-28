@@ -30,10 +30,8 @@ class CourierFactory(factory.django.DjangoModelFactory):
 class CouriersAndOrdersFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CouriersAndOrders
-
     courier_id = factory.SubFactory(CourierFactory)
     order_id = factory.SubFactory(OrderFactory)
-    #order_id = factory.SelfAttribute('order.order_id')
 
 
 def gen_courier_json(n=1):
