@@ -1,8 +1,8 @@
 import pytest
-from tests.test_api.factories import CourierFactory, gen_courier_json, gen_order_json, OrderFactory
+from tests.test_api.factories import CourierFactory, OrderFactory
 import datetime as dt
 import pytz
-from sweets_api.sweets.models import CouriersAndOrders, Order, Courier
+from sweets_api.sweets.models import Courier
 import factory
 
 order_valid_list = [OrderFactory.build(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:01']),
@@ -10,8 +10,8 @@ order_valid_list = [OrderFactory.build(order_id=1, weight=5.0, region=2, deliver
                     OrderFactory.build(order_id=3, weight=7.0, region=2, delivery_hours=['13:00-13:30']),
                     OrderFactory.build(order_id=4, weight=7.0, region=2, delivery_hours=['12:00-14:00'])]
 
-order_invalid_list = [OrderFactory.build(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:00']),
-                      OrderFactory.build(order_id=1, weight=7.0, region=2, delivery_hours=['14:00-16:00'])]
+order_invalid_list = [OrderFactory.build(order_id=5, weight=5.0, region=2, delivery_hours=['9:00-12:00']),
+                      OrderFactory.build(order_id=6, weight=7.0, region=2, delivery_hours=['14:00-16:00'])]
 
 pytestmark = pytest.mark.django_db
 
@@ -19,7 +19,6 @@ pytestmark = pytest.mark.django_db
 class TestCouriersEndpoints:
     def test_post_couriers(self, api_client):
         endpoint = '/couriers'
-        print(factory.build_batch(dict, 3, FACTORY_CLASS=CourierFactory))
         courier_json = {'data': factory.build_batch(dict, 3, FACTORY_CLASS=CourierFactory)}
         expected_response = {"couriers": [{"id": courier_json['data'][i]['courier_id']} for i in range(3)]}
         response = api_client().post(endpoint, courier_json, format='json')
@@ -74,6 +73,18 @@ class TestCouriersEndpoints:
         assert response.data['courier_type'] == 'foot'
         assert response.data['working_hours'] == ["11:35-14:05", "09:00-11:00"]
 
+    def test_patch_idempotens(self, api_client):
+        CourierFactory.create(courier_id=2, courier_type='foot', regions=[1, 2, 3], working_hours=['12:00-14:00'])
+        CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3], working_hours=['12:00-14:00'])
+        orders = order_valid_list + order_invalid_list
+        for order in orders:
+            order.save()
+        response = api_client().post('/orders/assign', {'courier_id': 2}, format='json')
+        first = response.data['orders']
+        response = api_client().patch('/couriers/2', {'working_hours': ['18:00-21:00']}, format='json')
+        response = api_client().post('/orders/assign', {'courier_id': 3}, format='json')
+        assert response.data['orders'] == first
+
     def test_get_courier(self, api_client):
         endpoint = '/couriers/'
         courier = CourierFactory.create()
@@ -125,26 +136,83 @@ class TestAssignOrdersEndpoints:
 
 
 class TestCompleteOrderEndpoints:
-    def setUp(self):
-        self.courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
-                                             working_hours=['12:00-14:00'])
-        self.order = OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
-
-    def test_post_orders(self, api_client):
+    def test_simple_complete_orders(self, api_client):
         courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
                                         working_hours=['12:00-14:00'])
-        order = OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
-        endpoint = '/orders/complete'
+        order = OrderFactory.create(order_id=4, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
         api_client().post('/orders/assign', {'courier_id': courier.courier_id})
-        response = api_client().post(endpoint, {'courier_id': courier.courier_id, 'order_id': order.order_id,
-                                                "complete_time": (dt.datetime.now(
-                                                    tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
-                                                    seconds=120)).isoformat()})
+        response = api_client().post('/orders/complete', {'courier_id': courier.courier_id, 'order_id': order.order_id,
+                                                          "complete_time": (dt.datetime.now(
+                                                              tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                              seconds=120)).isoformat()})
         expected = {'order_id': order.order_id}
         assert response.data == expected
         assert response.status_code == 200
         assert Courier.objects.filter(courier_id=3)[0].rating == 4.83
         assert Courier.objects.filter(courier_id=3)[0].earnings == 1000
+
+    def test_one_of_two_complete(self, api_client):
+        OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
+        courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
+                                        working_hours=['12:00-14:00'])
+        order = OrderFactory.create(order_id=4, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
+        api_client().post('/orders/assign', {'courier_id': courier.courier_id})
+        response = api_client().post('/orders/complete', {'courier_id': courier.courier_id, 'order_id': order.order_id,
+                                                          "complete_time": (dt.datetime.now(
+                                                              tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                              seconds=150)).isoformat()})
+        expected = {'order_id': order.order_id}
+        assert response.data == expected
+        assert response.status_code == 200
+        assert Courier.objects.filter(courier_id=3)[0].rating == 4.79
+        assert Courier.objects.filter(courier_id=3)[0].earnings == 0
+
+    def test_two_of_two_complete(self, api_client):
+        order_1 = OrderFactory.create(order_id=1, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
+        order_2 = OrderFactory.create(order_id=2, weight=7.0, region=2, delivery_hours=['13:00-14:30'])
+        courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
+                                        working_hours=['12:00-14:00'])
+        api_client().post('/orders/assign', {'courier_id': courier.courier_id})
+        api_client().post('/orders/complete', {'courier_id': courier.courier_id,
+                                               'order_id': order_1.order_id,
+                                               "complete_time": (dt.datetime.now(
+                                                   tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                   seconds=150)).isoformat()})
+        api_client().post('/orders/complete', {'courier_id': courier.courier_id,
+                                               'order_id': order_2.order_id,
+                                               "complete_time": (dt.datetime.now(
+                                                   tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                   seconds=250)).isoformat()})
+        assert round(Courier.objects.filter(courier_id=3)[0].rating, 1) == 4.8
+        assert Courier.objects.filter(courier_id=3)[0].earnings == 1000
+
+    def test_two_assigns(self, api_client):
+        order_1 = OrderFactory.create(order_id=1, weight=7.0, region=2, delivery_hours=['13:00-13:30'])
+        order_2 = OrderFactory.create(order_id=2, weight=7.0, region=2, delivery_hours=['13:00-14:30'])
+        courier = CourierFactory.create(courier_id=3, courier_type='foot', regions=[1, 2, 3],
+                                        working_hours=['12:00-14:00'])
+        api_client().post('/orders/assign', {'courier_id': courier.courier_id})
+        order_3 = OrderFactory.create(order_id=3, weight=7.0, region=2, delivery_hours=['13:00-14:30'])
+        api_client().post('/orders/assign', {'courier_id': courier.courier_id})
+        api_client().post('/orders/complete', {'courier_id': courier.courier_id,
+                                               'order_id': order_1.order_id,
+                                               "complete_time": (dt.datetime.now(
+                                                   tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                   seconds=150)).isoformat()})
+        api_client().post('/orders/complete', {'courier_id': courier.courier_id,
+                                               'order_id': order_2.order_id,
+                                               "complete_time": (dt.datetime.now(
+                                                   tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                   seconds=250)).isoformat()})
+        assert round(Courier.objects.filter(courier_id=3)[0].rating, 1) == 4.8
+        assert Courier.objects.filter(courier_id=3)[0].earnings == 1000
+        api_client().post('/orders/complete', {'courier_id': courier.courier_id,
+                                               'order_id': order_3.order_id,
+                                               "complete_time": (dt.datetime.now(
+                                                   tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                                   seconds=500)).isoformat()})
+        assert round(Courier.objects.filter(courier_id=3)[0].rating, 1) == 4.8
+        assert Courier.objects.filter(courier_id=3)[0].earnings == 2000
 
 
 class TestIntegral:
@@ -214,6 +282,11 @@ class TestIntegral:
                                          seconds=150)).isoformat()}, format='json')
         assert response.data == {"order_id": 3}
         assert response.status_code == 200
+        assert Courier.objects.get(pk=2).earnings == 0
+        response = api_client().post('/orders/complete',
+                                     {'courier_id': 2, 'order_id': 2, 'complete_time': (dt.datetime.now(
+                                         tz=pytz.timezone('Europe/Moscow')) + dt.timedelta(
+                                         seconds=150)).isoformat()}, format='json')
         assert Courier.objects.get(pk=2).rating == 4.79
         assert Courier.objects.get(pk=2).earnings == 2500
         response = api_client().get('/couriers/2')
