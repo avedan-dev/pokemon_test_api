@@ -1,0 +1,35 @@
+###########
+# BUILDER #
+###########
+FROM python:3.8.5-alpine as builder
+WORKDIR .
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+RUN apk update \
+    && apk add postgresql-dev gcc python3-dev musl-dev
+RUN pip install --upgrade pip
+COPY . .
+# install dependencies
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir ./wheels -r requirements.txt
+#########
+# FINAL #
+#########
+FROM python:3.8.5-alpine
+RUN mkdir -p /home/api
+RUN addgroup -S api && adduser -S api -G api
+ENV HOME=/home/api
+ENV APP_HOME=/home/api/web
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+RUN apk update && apk add libpq
+COPY --from=builder ./wheels /wheels
+COPY --from=builder ./requirements.txt .
+RUN pip install --no-cache /wheels/*
+COPY ./deploy/entrypoint.prod.sh $APP_HOME/deploy
+COPY . $APP_HOME
+RUN mkdir $APP_HOME/sweets_api/staticfiles
+RUN chown -R api:api $APP_HOME
+USER api
+ENTRYPOINT ["/home/api/web/deploy/entrypoint.prod.sh"]
