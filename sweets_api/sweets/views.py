@@ -181,5 +181,3 @@ class CompleteView(APIView):
             return Response({"order_id": serializer.validated_data["order_id"]}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-# TODO: Добавить проверку на завершенность заказа
-# TODO: Проверить как начисляются деньги за завершенные заказы, за пачку или за каждый
