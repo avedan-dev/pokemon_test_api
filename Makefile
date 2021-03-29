@@ -7,6 +7,7 @@ all:
 		@echo "make nginx		- Собирает и запускает контейнер nginx"
 		@echo "make test		- Запустить тесты"
 		@echo "make stop		- Oстанавливает все контейнеры"
+		@echo "make run-local	- Запускает локальный сервер"
 		@exit 0
 
 venv:
@@ -32,3 +33,6 @@ stop:
 
 start:
 	docker-compose up -d
+
+run-local:
+	python manage.py runserver
