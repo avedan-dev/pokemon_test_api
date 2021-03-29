@@ -13,6 +13,7 @@ class CourierSerializer(serializers.ModelSerializer):
         model = Courier
         fields = '__all__'
 
+    # Проверка на наличие повторяющихся регионов
     def validate_regions(self, regions):
         if len(regions) != len(set(regions)):
             raise serializers.ValidationError(
@@ -26,6 +27,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
 
+    # Проверка весе заказа
     def validate_weight(self, value):
         if value > 50 or value < 0.01:
             raise serializers.ValidationError("Invalid weight")
@@ -37,6 +39,7 @@ class AssignSerializer(serializers.Serializer):
     order_id = serializers.IntegerField(required=False)
     assign_time = serializers.DateTimeField(required=False)
 
+    # Проверка существует ли курьер с данным id
     def validate_courier_id(self, value):
         try:
             if Courier.objects.all().get(pk=value).courier_id:
@@ -55,6 +58,7 @@ class AssignSerializer(serializers.Serializer):
 
 
 class CompleteSerializer(serializers.Serializer):
+    # Проверка на то что, время завершения заказа меньше чем время его назначения
     def validate(self, data):
         new = CouriersAndOrders.objects.get(courier_id=data["courier_id"],
                                             order_id=data["order_id"])
@@ -68,6 +72,7 @@ class CompleteSerializer(serializers.Serializer):
     order_id = serializers.IntegerField()
     complete_time = serializers.DateTimeField()
 
+    # Проверка существует ли курьер с данным id
     def validate_courier_id(self, value):
         try:
             if Courier.objects.all().get(pk=value).courier_id:
@@ -75,6 +80,7 @@ class CompleteSerializer(serializers.Serializer):
         except (AttributeError, ObjectDoesNotExist):
             raise serializers.ValidationError("This courier id does not exist")
 
+    # Проверка существует ли заказ с данным id
     def validate_order_id(self, value):
         try:
             if Order.objects.all().get(pk=value).order_id:

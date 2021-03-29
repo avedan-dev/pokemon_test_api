@@ -1,11 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+
 from .models import Courier, Order, CouriersAndOrders
 from .serializers import CourierSerializer, OrderSerializer, AssignSerializer, CompleteSerializer
+
 from django.db.models import Avg
-import datetime as dt
 from django.utils.timezone import now
+import datetime as dt
 
 # Грузоподъемность
 courier_lifting = {

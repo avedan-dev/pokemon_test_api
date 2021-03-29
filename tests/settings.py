@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 
+# Отдельный файл с настройками для тестов, если понадобятся отдельные настройки
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -14,7 +15,6 @@ SECRET_KEY = 'foo'
 DEBUG = 1
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -59,7 +59,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sweets_api.django_core.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 DATABASES = {
@@ -75,7 +74,6 @@ DATABASES = {
         }
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -95,7 +93,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Europe/Moscow'
@@ -105,6 +102,5 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 STATIC_URL = '/static/'
