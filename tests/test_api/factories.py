@@ -1,5 +1,5 @@
 import factory
-from sweets_api.sweets.models import Courier, Order, CouriersAndOrders
+from pokemon.pokemon.models import Courier, Order, CouriersAndOrders
 import random
 
 

@@ -22,7 +22,7 @@ else:
 # Application definition
 
 INSTALLED_APPS = [
-    'sweets_api.sweets',
+    'pokemon.pokemon',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,7 +42,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'sweets_api.django_core.urls'
+ROOT_URLCONF = 'pokemon.django_core.urls'
 
 TEMPLATES = [
     {
@@ -60,7 +60,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'sweets_api.django_core.wsgi.application'
+WSGI_APPLICATION = 'pokemon.django_core.wsgi.application'
 
 
 # Database

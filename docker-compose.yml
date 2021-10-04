@@ -8,15 +8,15 @@ services:
     depends_on:
       - web
     volumes:
-      - static_volume:/home/api/web/sweets_api/staticfiles
+      - static_volume:/home/api/web/pokemon/staticfiles
   web:
     restart: always
     build:
           context: .
           dockerfile: ./deploy/Dockerfile.prod
-    command: gunicorn sweets_api.django_core.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn pokemon.django_core.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - static_volume:/home/api/web/sweets_api/staticfiles
+      - static_volume:/home/api/web/pokemon/staticfiles
     expose:
       - 8000
     env_file:

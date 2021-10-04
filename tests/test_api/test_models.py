@@ -1,6 +1,6 @@
 import pytest
 from tests.test_api.factories import OrderFactory, CourierFactory
-from sweets_api.sweets.models import Order, Courier
+from pokemon.pokemon.models import Order, Courier
 
 
 @pytest.mark.django_db

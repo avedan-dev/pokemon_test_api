@@ -2,7 +2,7 @@ import pytest
 from tests.test_api.factories import CourierFactory, OrderFactory
 import datetime as dt
 import pytz
-from sweets_api.sweets.models import Courier
+from pokemon.pokemon.models import Courier
 import factory
 
 order_valid_list = [OrderFactory.build(order_id=1, weight=5.0, region=2, delivery_hours=['9:00-12:01']),
